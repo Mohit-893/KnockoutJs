@@ -1,0 +1,33 @@
+﻿@page
+@model readDataFromCSV.Pages.ReadEmployee.IndexModel
+@{
+}
+<br />
+<h2>Employee Data</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>DOB</th>
+            <th>DOJ</th>
+            <th>City</th>
+            <th>State</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.searchParameters)
+        {
+            <tr>
+                <td>@item.ID</td>
+                <td>@item.Name</td>
+                <td>@item.Age</td>
+                <td>@item.DOB</td>
+                <td>@item.DOJ</td>
+                <td>@item.City</td>
+                <td>@item.State</td>
+            </tr>
+        }
+    </tbody>
+</table>
