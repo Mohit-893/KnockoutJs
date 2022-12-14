@@ -16,6 +16,7 @@ namespace FrontEnd.Controllers
     public class EmployeeController : Controller
     {
         public List<Employee> Employees = new List<Employee>();
+        public List<Employee> InvalidEmployees = new List<Employee>();
         public async void LoadDatausingStreamReader()
         {
             try
@@ -26,6 +27,7 @@ namespace FrontEnd.Controllers
                     using (var csvReader = new CsvReader(streamReader, false))
                     {
                         Employees = csvReader.GetRecords<Employee>().ToList();
+                        
                     }
                 }
                 foreach (var item in Employees)
@@ -55,6 +57,10 @@ namespace FrontEnd.Controllers
                         response.EnsureSuccessStatusCode();
 
                     }
+                    else
+                    {
+                        InvalidEmployees.Add(item);
+                    }
 
                 }
             }
@@ -81,6 +87,7 @@ namespace FrontEnd.Controllers
                     var EmpResponse = Res.Content.ReadAsStringAsync().Result;
                     EmpInfo = JsonConvert.DeserializeObject<List<Employee>>(EmpResponse);
                 }
+                ViewBag.Invalid = InvalidEmployees;
                 return View(EmpInfo);
             }
         }
