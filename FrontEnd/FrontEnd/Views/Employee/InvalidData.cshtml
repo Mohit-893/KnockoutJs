@@ -1,10 +1,10 @@
-﻿@model IEnumerable<FrontEnd.Models.Employee>
+﻿@model IEnumerable<FrontEnd.Models.InvalidEmployee>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "InvalidData";
 }
 
-<h1>Index</h1>
+<h1>InvalidData</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -33,6 +33,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.State)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InvalidString)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -60,6 +63,9 @@
             <td>
                 @Html.DisplayFor(modelItem => item.State)
             </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.InvalidString)
+            </td>
             @*<td>
                 @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
                 @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
@@ -69,7 +75,3 @@
 }
     </tbody>
 </table>
-
-
-
-

@@ -16,7 +16,8 @@ namespace FrontEnd.Controllers
     public class EmployeeController : Controller
     {
         public List<Employee> Employees = new List<Employee>();
-        public List<Employee> InvalidEmployees = new List<Employee>();
+        public List<InvalidEmployee> InvalidEmployees = new List<InvalidEmployee>();
+        readonly string Baseurl = "https://localhost:44372/";
         public async void LoadDatausingStreamReader()
         {
             try
@@ -27,7 +28,7 @@ namespace FrontEnd.Controllers
                     using (var csvReader = new CsvReader(streamReader, false))
                     {
                         Employees = csvReader.GetRecords<Employee>().ToList();
-                        
+
                     }
                 }
                 foreach (var item in Employees)
@@ -57,10 +58,7 @@ namespace FrontEnd.Controllers
                         response.EnsureSuccessStatusCode();
 
                     }
-                    else
-                    {
-                        InvalidEmployees.Add(item);
-                    }
+
 
                 }
             }
@@ -69,10 +67,6 @@ namespace FrontEnd.Controllers
                 Console.WriteLine("Exception : " + ex.ToString());
             }
         }
-
-
-        string Baseurl = "https://localhost:44372/";
-        // GET: EmployeesController
         public async Task<IActionResult> Index()
         {
             List<Employee> EmpInfo = new List<Employee>();
@@ -91,92 +85,195 @@ namespace FrontEnd.Controllers
                 return View(EmpInfo);
             }
         }
-
-        // GET: EmployeesController/Details/5
-        public ActionResult Details(int id)
-        {
-
-            return View();
-        }
-
-        // GET: EmployeesController/Create
-        public ActionResult Create()
-        {
-            //LoadData();
-            LoadDatausingStreamReader();
-            //return View(new PostEmployee());
-            return RedirectToAction(nameof(Index));
-        }
-
-
-        // POST: EmployeesController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(Employee emp)
+        public IActionResult InvalidData()
         {
             try
             {
+                using (var streamReader = new StreamReader(@"C:\Users\mohit\Downloads\ms.csv"))
+                {
+                    using (var csvReader = new CsvReader(streamReader, false))
+                    {
+                        Employees = csvReader.GetRecords<Employee>().ToList();
 
-                return RedirectToAction(nameof(Index));
+                    }
+                }
+                foreach (var item in Employees)
+                {
+                    InvalidEmployee emp = new InvalidEmployee();
+                    if (!((item.Name != "") & (item.State != "") & (item.City != "") & (item.Age >= 21 & item.Age <= 60) & (item.DOB != null) & (item.DOJ != null)))
+                    {
+                        emp.ID = item.ID;
+                        emp.Name = item.Name;
+                        emp.State = item.State;
+                        emp.City = item.City;
+                        emp.Age = item.Age;
+                        emp.DOB = item.DOB;
+                        emp.DOJ = item.DOJ;
+                        if (item.Name == "")
+                        {
+                            emp.InvalidString = "Name Cannot be empty";
+                        }
+                        if (item.City == "")
+                        {
+                            emp.InvalidString = "City Cannot be empty";
+                        }
+                        if (item.Age < 21)
+                        {
+                            emp.InvalidString = "Age is less then 21";
+                        }
+                        if (item.Age > 60)
+                        {
+                            emp.InvalidString = "Age is more then 60";
+                        }
+                        if (item.DOB == null)
+                        {
+                            emp.InvalidString = "DOB cannot be empty";
+                        }
+                        if (item.DOJ == null)
+                        {
+                            emp.InvalidString = "DOJ cannot be empty";
+                        }
+                        InvalidEmployees.Add(emp);
+                    }
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return View(new Employee());
+                Console.WriteLine(ex);
             }
+            return View(InvalidEmployees);
         }
-
-        // GET: EmployeesController/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<ActionResult> Details(int id)
         {
-
-            return View();
-        }
-
-        // POST: EmployeesController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, Employee emp)
-        {
-            try
-            {
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: EmployeesController/Delete/5
-        public async Task<ActionResult> Delete(int id)
-        {
+            Employee emp = new Employee();
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
                 client.DefaultRequestHeaders.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpResponseMessage Res = await client.DeleteAsync("api/Employee/deleteemployee/" + id.ToString());
+                HttpResponseMessage Res = await client.GetAsync("api/Employee/searchemployeebyid/" + id.ToString());
+                if (Res.IsSuccessStatusCode)
+                {
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    emp = JsonConvert.DeserializeObject<Employee>(EmpResponse);
+                }
             }
-            //return RedirectToAction(nameof(Index));
-            return View();
+            return View(emp);
         }
-
-        // POST: EmployeesController/Delete/5
+        public ActionResult Import()
+        {
+            LoadDatausingStreamReader();
+            return RedirectToAction(nameof(Index));
+        }
+        public ActionResult Create()
+        {
+            return View(new PostEmployee());
+        }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, Employee emp)
+        public async Task<ActionResult> Create(PostEmployee emp)
         {
             try
             {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(Baseurl);
+                    client.DefaultRequestHeaders.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    HttpResponseMessage Res = await client.PostAsJsonAsync("api/Employee/addemployee", emp);
 
+                    return RedirectToAction(nameof(Index));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return View(new PostEmployee());
+            }
+
+
+        }
+        public async Task<ActionResult> Edit(int id)
+        {
+            Employee emp = new Employee();
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage Res = await client.GetAsync("api/Employee/searchemployeebyid/" + id.ToString());
+                if (Res.IsSuccessStatusCode)
+                {
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    emp = JsonConvert.DeserializeObject<Employee>(EmpResponse);
+                }
+            }
+
+            return View(emp);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Edit(int id, Employee emp)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(Baseurl);
+                    client.DefaultRequestHeaders.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    var payload = Newtonsoft.Json.JsonConvert.SerializeObject(emp);
+                    var buffer = Encoding.UTF8.GetBytes(payload);
+                    var bytes = new System.Net.Http.ByteArrayContent(buffer);
+                    bytes.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json");
+                    HttpResponseMessage Res = await client.PutAsync("api/Employee/updateemployee/" + id.ToString(), bytes);
+                }
                 return RedirectToAction(nameof(Index));
             }
             catch
             {
-                return View();
+                return View(emp);
             }
         }
+        public async Task<ActionResult> Delete(int id)
+        {
+            Employee emp = new Employee();
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage Res = await client.GetAsync("api/Employee/searchemployeebyid/" + id.ToString());
+                if (Res.IsSuccessStatusCode)
+                {
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    emp = JsonConvert.DeserializeObject<Employee>(EmpResponse);
+                }
+            }
 
+            return View(emp);
+         
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Delete(Employee emp)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(Baseurl);
+                    client.DefaultRequestHeaders.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    HttpResponseMessage Res = await client.DeleteAsync("api/Employee/deleteemployee/" + emp.ID.ToString());
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                return View(emp);
+            }
+        }
     }
 }

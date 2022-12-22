@@ -29,7 +29,7 @@ namespace Api.Controllers
         [HttpGet("searchemployeebyid/{id}")]
         public IActionResult SearchById(int id)
         {
-                return Ok(_context.Emp.Where(x => x.ID == id).ToList());
+                return Ok(_context.Emp.Where(x => x.ID == id).FirstOrDefault());
         }
 
         [HttpGet("searchemployeebyname/{name}")]
@@ -37,19 +37,6 @@ namespace Api.Controllers
         {
                 return Ok(_context.Emp.Where(x => x.Name == name).ToList());
         }
-        //[HttpGet("searchemployee/{param}")]
-        //public IActionResult SearchEmployee(string param)
-        //{
-        //    if (Convert.ToInt32(param) > 0)
-        //    {
-        //        return Ok(_context.Emp.Where(x => x.ID == Convert.ToInt32(param)));
-        //    }
-        //    else
-        //    {
-        //        return Ok(_context.Emp.Where(x => x.Name == param));
-        //    }
-        //    //return Ok(_context.Emp.Where(x => x.Name == param || x.ID == Convert.ToInt32(param)));
-        //}
 
         [HttpPost("addemployee")]
         public void AddEmployee(Employee emp)
